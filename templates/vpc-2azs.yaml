@@ -61,7 +61,7 @@ Resources:
       VpcId: !Ref VPC
       InternetGatewayId: !Ref InternetGateway
   SubnetAPublic:
-    DependsOn: VPCCidrBlock
+    DependsOn: [VPCCidrBlock, InternetGateway, VPCGatewayAttachment]
     Type: 'AWS::EC2::Subnet'
     Properties:
       #AssignIpv6AddressOnCreation: true # TODO can not be set if MapPublicIpOnLaunch is true as well
