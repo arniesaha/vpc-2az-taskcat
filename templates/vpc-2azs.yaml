@@ -30,6 +30,26 @@ Parameters:
     MinValue: 0
     MaxValue: 255
 Resources:
+  DelayFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: "index.handler"
+      Timeout: 900
+      Role: !GetAtt 'LambdaRole.Arn'
+      Runtime: python3.7
+      Code:
+        ZipFile: |
+          import json
+          import cfnresponse
+          import time
+          def handler(event, context):
+            time_to_wait = int(event['ResourceProperties']['TimeToWait'])
+            print('wait started')
+            time.sleep(time_to_wait)
+            responseData = {}
+            responseData['Data'] = "wait complete"
+            print("wait completed")
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
   VPC:
     Type: 'AWS::EC2::VPC'
     Properties:
@@ -422,3 +442,8 @@ Outputs:
     Value: !Ref RouteTableBPrivate
     Export:
       Name: !Sub '${AWS::StackName}-RouteTableBPrivate'
+  Delay:
+    Type: 'Custom::Delay'
+    Properties:
+      ServiceToken: !GetAtt DelayFunction.Arn
+      TimeToWait: 240
