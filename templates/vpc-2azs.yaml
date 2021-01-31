@@ -30,6 +30,52 @@ Parameters:
     MinValue: 0
     MaxValue: 255
 Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: "lambda-logs"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource:
+                  - "arn:aws:logs:*:*:*"
+  DelayFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      Handler: "index.handler"
+      Timeout: 900
+      Role: !GetAtt 'LambdaRole.Arn'
+      Runtime: python3.7
+      Code:
+        ZipFile: |
+          import json
+          import cfnresponse
+          import time
+          def handler(event, context):
+            time_to_wait = int(event['ResourceProperties']['TimeToWait'])
+            print('wait started')
+            time.sleep(time_to_wait)
+            responseData = {}
+            responseData['Data'] = "wait complete"
+            print("wait completed")
+            cfnresponse.send(event, context, cfnresponse.SUCCESS, responseData)
   VPC:
     Type: 'AWS::EC2::VPC'
     Properties:
@@ -312,6 +358,12 @@ Resources:
       RuleAction: allow
       Egress: true
       Ipv6CidrBlock: '::/0'
+  Delay:
+    Type: 'Custom::Delay'
+    Properties:
+      ServiceToken: !GetAtt DelayFunction.Arn
+      TimeToWait: 240
+  
 Outputs:
   TemplateID:
     Description: 'cloudonaut.io template id.'
@@ -422,3 +474,4 @@ Outputs:
     Value: !Ref RouteTableBPrivate
     Export:
       Name: !Sub '${AWS::StackName}-RouteTableBPrivate'
+  
