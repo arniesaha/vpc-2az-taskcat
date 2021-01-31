@@ -358,6 +358,12 @@ Resources:
       RuleAction: allow
       Egress: true
       Ipv6CidrBlock: '::/0'
+  Delay:
+    Type: 'Custom::Delay'
+    Properties:
+      ServiceToken: !GetAtt DelayFunction.Arn
+      TimeToWait: 240
+  
 Outputs:
   TemplateID:
     Description: 'cloudonaut.io template id.'
@@ -468,8 +474,4 @@ Outputs:
     Value: !Ref RouteTableBPrivate
     Export:
       Name: !Sub '${AWS::StackName}-RouteTableBPrivate'
-  Delay:
-    Type: 'Custom::Delay'
-    Properties:
-      ServiceToken: !GetAtt DelayFunction.Arn
-      TimeToWait: 240
+  
